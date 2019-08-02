@@ -86,6 +86,12 @@ class _PulseAudio:
         while self._pa_operation_get_state(operation) == _pa.PA_OPERATION_RUNNING:
             time.sleep(0.001)
 
+    def _last_error(self):
+        error_code = self._pa_context_errno(self.context)
+        error_as_char_array = _pa.pa_strerror(error_code)
+        error_as_string = _ffi.string(error_as_char_array).decode('utf-8')
+        return (error_code, error_as_string)
+
     @property
     def source_list(self):
         """Return a list of dicts of information about available sources."""
@@ -180,6 +186,7 @@ class _PulseAudio:
     _pa_context_get_sink_info_by_name = _lock_and_block(_pa.pa_context_get_sink_info_by_name)
     _pa_context_get_server_info = _lock_and_block(_pa.pa_context_get_server_info)
     _pa_context_get_state = _lock(_pa.pa_context_get_state)
+    _pa_context_errno = _lock(_pa.pa_context_errno)
     _pa_context_drain = _lock(_pa.pa_context_drain)
     _pa_context_disconnect = _lock(_pa.pa_context_disconnect)
     _pa_context_unref = _lock(_pa.pa_context_unref)
@@ -570,6 +577,9 @@ class _Stream:
             raise RuntimeError('invalid channel map')
 
         self.stream = _pulse._pa_stream_new(_pulse.context, self._name.encode(), samplespec, channelmap)
+        if self.stream == _ffi.NULL:
+            raise RuntimeError("Stream creation failed, returned NULL pointer."
+                               f" The most recent error code is: {_pulse._last_error()}")
         bufattr = _ffi.new("pa_buffer_attr*")
         bufattr.maxlength = 2**32-1 # max buffer length
         numchannels = self.channels if isinstance(self.channels, int) else len(self.channels)
