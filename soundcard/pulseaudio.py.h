@@ -155,6 +155,7 @@ pa_mainloop_api *pa_threaded_mainloop_get_api(pa_threaded_mainloop *m);
 typedef struct pa_context pa_context;
 pa_context *pa_context_new(pa_mainloop_api *mainloop, const char *name);
 void pa_context_unref(pa_context *c);
+int pa_context_errno (pa_context *c);
 typedef enum pa_context_flags {PA_CONTEXT_NOFLAGS = 0} pa_context_flags_t;
 typedef struct pa_spawn_api pa_spawn_api;
 int pa_context_connect(pa_context *c, const char *server, pa_context_flags_t flags, const pa_spawn_api *api);
@@ -402,3 +403,6 @@ typedef void(*pa_stream_request_cb_t)(pa_stream *p, size_t nbytes, void *userdat
 void pa_stream_set_read_callback(pa_stream *p, pa_stream_request_cb_t cb, void *userdata);
 
 pa_operation* pa_stream_update_timing_info(pa_stream *s, pa_stream_success_cb_t cb, void *userdata);
+
+// Return a human readble error message for the specified numeric error code.
+const char* pa_strerror(int error);
